@@ -1,0 +1,38 @@
+spring:
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://gitee.com/Sanliren/config-profile.git
+          search-paths: squirrel_config
+          username: Sanliren
+          password: Asam1024
+          basedir: /usr/config/squirrel/
+  application:
+    name: configserver
+  rabbitmq:
+    host: 134.175.80.169
+    port: 5672
+    username: rabbit
+    password: Asam1024
+
+#暴露bus-refresh接口  访问该接口要/actuator
+#configServer的启动类加上注解@RefreshScope
+#configClient的启动类也加上注解@RefreshScope
+#修改github上的配置文件之后，打开postman，请求方式是post，地址是http://localhost:8881/actuator/bus-refresh，这个端口号是configServer的。
+management:
+  endpoints:
+    web:
+      exposure:
+        include: bus-refresh
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:8765/eureka/
+
