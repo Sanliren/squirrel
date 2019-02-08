@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.servlet.http.HttpServletResponse;
 
+@Order(2)
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)//主要是为了在资源上添加@PreAuthorize("hasAuthority('FOO_WRITE')")注解时，访问需要权限
@@ -33,16 +34,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-
             .csrf().disable()
             .exceptionHandling()
             .authenticationEntryPoint((request,response,authException)->response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
             .and()
             .authorizeRequests()
-            .antMatchers( "/oauth/token", "/auth/test").permitAll()
+            .antMatchers( "/oauth/token", "/oauth/**").permitAll()
             .antMatchers("/**").authenticated()
             .and()
             .httpBasic()
+            .and()
+            .formLogin().permitAll() //新增login form支持用户登录及授权
         ;
         //不拦截 oauth 开放的资源
         /*http.csrf().disable();

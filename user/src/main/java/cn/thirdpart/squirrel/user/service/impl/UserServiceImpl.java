@@ -1,6 +1,7 @@
 package cn.thirdpart.squirrel.user.service.impl;
 
 import cn.thirdpart.squirrel.user.authfeignclient.AuthServiceClient;
+import cn.thirdpart.squirrel.user.config.redis.RedisUtil;
 import cn.thirdpart.squirrel.user.dao.LoginUserDao;
 import cn.thirdpart.squirrel.user.dao.RoleDao;
 import cn.thirdpart.squirrel.user.dao.UserinfoDao;
@@ -17,7 +18,9 @@ import cn.thirdpart.squirrel.user.vo.JWT;
 import cn.thirdpart.squirrel.user.vo.LoginUserVo;
 import cn.thirdpart.squirrel.user.vo.UserLoginDTO;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional(propagation = Propagation.REQUIRED, readOnly = false, rollbackFor = { Exception.class })
 public class UserServiceImpl implements UserService {
@@ -45,6 +49,8 @@ public class UserServiceImpl implements UserService {
     UserinfoDao userinfoDao;
     @Autowired
     RoleDao roleDao;
+    @Autowired
+    RedisUtil redisUtil;
 
     @Override
     public LoginUser register(LoginUserVo formUser) throws UserException{
@@ -65,6 +71,7 @@ public class UserServiceImpl implements UserService {
             loginUser.setModifyTime(new Date());
             loginUser.setModifier(uid);
             loginUser.setStatus(1);//
+
             LoginUser result = loginUserDao.saveAndFlush(loginUser);
             return result;
         } else {
@@ -84,11 +91,27 @@ public class UserServiceImpl implements UserService {
         if(!BPwdEncoderUtil.matches(credential, loginUser.getCredential())){
             throw new UserException("密码或者用户名错误");
         }
+        String jwtJson = null;
+        //userJwtKey由identifier+id组成
+        String userJwtKey = loginUser.getIdentifier()+"_"+loginUser.getId();
+        String jwt_redis = (String)redisUtil.get(userJwtKey);
+//        log.info("jwt_redis : "+jwt_redis);
+        if(StringUtils.isBlank(jwt_redis)){
+            //请求认证服务获取到jwt
+            jwtJson = authServiceClient.getToken("Basic YXV0aF9zZXJ2ZXI6MTIzNDU2", "password", identifier, credential);
+            //过期时间
+            JSONObject jsonObject = JSON.parseObject(jwtJson);
+            long deadline = jsonObject.getLongValue("expires_in");//过期时间
+            //将jwt保存到redis
+            redisUtil.set(userJwtKey, jwtJson, deadline);
+        } else {
+            //jwt_redis 不为空, 证明redis缓存中有，则取缓存中的值
+            jwtJson = jwt_redis;
+        }
 
         //dXNlci1zZXJ2aWNlOjEyMzQ1Ng== 是 user-service:123456的 base64编码
         // dXNlcjoxMjM0NTY= 是 user:123456的 base64编码
 //        JWT jwt = authServiceClient.getToken("Basic dXNlcjoxMjM0NTY=", "password", identifier, credential);
-        String  jwtJson = authServiceClient.getToken("Basic dXNlcjoxMjM0NTY=", "password", identifier, credential);
 //        JWT jwt = authServiceClient.getToken( "password", identifier, credential);
         //将jwtJson的json字符串转换成JWT对象
         JWT jwt = JSON.parseObject(jwtJson, new TypeReference<JWT>(){});

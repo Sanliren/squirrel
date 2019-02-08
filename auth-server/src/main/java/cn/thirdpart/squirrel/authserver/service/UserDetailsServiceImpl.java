@@ -47,16 +47,18 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         log.info("在auth-server服务中json转换对象的用户昵称："+loginUserVo.getUserinfo().getNickname());
 
         //先通过role对象构造GrantedAuthority对象
-        Set<GrantedAuthority> roleList = new HashSet<>();
+        /*Set<GrantedAuthority> roleList = new HashSet<>();
         for(RoleVo roleVo : loginUserVo.getUserinfo().getRoles()){
             GrantedAuthority authority = new SimpleGrantedAuthority(roleVo.getRoleName());
             roleList.add(authority);
-        }
-        log.info("在auth-server服务中GrantedAuthority的json字符串为："+JSON.toJSONString(roleList));
-
-        log.info("identifier is : "+loginUserVo.getIdentifier() + "; and credential is : "+loginUserVo.getCredential() + "; and roleList is : " + roleList);
+        }*/
+//        log.info("在auth-server服务中GrantedAuthority的json字符串为："+JSON.toJSONString(roleList));
+//
+//        log.info("identifier is : "+loginUserVo.getIdentifier() + "; and credential is : "+loginUserVo.getCredential() + "; and roleList is : " + roleList);
         //构造UserDetails对象
-        UserDetails userDetails = new User(loginUserVo.getIdentifier(), loginUserVo.getCredential(), roleList);
+//        UserDetails userDetails = new User(loginUserVo.getIdentifier(), loginUserVo.getCredential(), roleList);
+        UserDetails userDetails = new MyUserDetails(loginUserVo);
+
 
         /**
          * isAccountNonExpired----账号是否过期

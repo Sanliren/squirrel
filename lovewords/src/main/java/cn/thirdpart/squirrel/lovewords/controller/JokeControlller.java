@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
+//@RequestMapping(value = "/lovewords")
 @Api(value = "JokeControlller相关的api", tags = "笑话操作接口")
 public class JokeControlller {
 

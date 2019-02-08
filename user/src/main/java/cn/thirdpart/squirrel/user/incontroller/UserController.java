@@ -238,11 +238,14 @@ public class UserController {
         if(dbUser != null){
             LoginUserVo resultUser = new LoginUserVo();
             UserinfoVo userinfoVo = new UserinfoVo();
-            BeanUtils.copyProperties(dbUser.getUserinfo(), userinfoVo);
+            if(dbUser.getUserinfo() != null){
+                BeanUtils.copyProperties(dbUser.getUserinfo(), userinfoVo);
+
+            }
+//            BeanUtils.copyProperties(dbUser.getUserinfo(), userinfoVo);
             BeanUtils.copyProperties(dbUser, resultUser);
             //将userinfo设置给resultUser
             resultUser.setUserinfo(userinfoVo);
-            System.out.println("resultUser.userinfo " +resultUser.getUserinfo().getNickname());
             Map<String, Object> map = new HashMap<>();
             map.put("user", resultUser);
             responseResult = new ResponseResult(1, "成功获取用户 "+identifier+" 的信息", map);

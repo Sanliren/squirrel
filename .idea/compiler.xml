@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="api-gateway" />
+        <module name="appreg" />
         <module name="auth-server" />
         <module name="config" />
         <module name="eureka" />
