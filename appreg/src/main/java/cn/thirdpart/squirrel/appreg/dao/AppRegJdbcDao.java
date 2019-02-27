@@ -4,11 +4,13 @@ import cn.thirdpart.squirrel.appreg.entity.AppReg;
 import cn.thirdpart.squirrel.appreg.rowmapper.AppRegRowMapper;
 import cn.thirdpart.squirrel.appreg.util.BPwdEncoderUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
+import java.util.List;
 
 @Slf4j
 @Repository
@@ -72,11 +74,17 @@ public class AppRegJdbcDao {
         Object[] params = new Object[] {
                 appKey
         };
-        AppReg appReg = jdbcTemplate.queryForObject(sql, params, new AppRegRowMapper());
+        AppReg appReg = null;
+        List<AppReg> appRegs = jdbcTemplate.query(sql, params, new AppRegRowMapper());
+        if(appRegs == null || appRegs.isEmpty()){
+            return null;
+        } else {
+            appReg = appRegs.get(0);
+        }
         if(appReg != null){
             String sql_client = "select client_id from oauth_client_details where client_id = ?";
             String client_id = jdbcTemplate.queryForObject(sql_client, new Object[]{appReg.getAppKey()}, String.class);
-            if(client_id != null){
+            if(StringUtils.isNotBlank(client_id)){
                 return appReg;
             } else {
                 log.info("oauth_client_details表中没有存在相应应用的client_id！！");
@@ -88,5 +96,36 @@ public class AppRegJdbcDao {
         }
 
     }
+
+    /**
+     * 查找我的应用
+     * @param myid
+     * @return
+     */
+    public List<AppReg> getMyAppRegs(String myid){
+        List<AppReg> appRegs = null;
+        String sql = "select * from t_app where loginuser_id = ?";
+        Object[] params = new Object[]{
+                myid
+        };
+        appRegs = jdbcTemplate.query(sql, params, new AppRegRowMapper());
+        return appRegs;
+    }
+
+    /**
+     * 根据参数返回按照时间排序返回前num条数据
+     * @param num
+     * @return
+     */
+    public List<AppReg> findApps(int num){
+        List<AppReg> appRegs = null;
+        String sql = "SELECT * FROM t_app t  ORDER BY t.create_time LIMIT ?";
+        Object[] params = new Object[]{
+                num
+        };
+        appRegs = jdbcTemplate.query(sql, params, new AppRegRowMapper());
+        return appRegs;
+    }
+
 
 }
